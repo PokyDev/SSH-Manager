@@ -13,7 +13,7 @@ export default function Titlebar({ title = "Duck Manager" }) {
       </div>
 
       <div className="titlebar__center" data-tauri-drag-region>
-        <span className="titlebar__title">{title}</span>
+        <span className="titlebar__title" data-tauri-drag-region>{title}</span>
       </div>
 
       <div className="titlebar__right">
