@@ -1,4 +1,4 @@
-import { useSlideMessage } from '../../utils/slide-message';
+import { useSlideMessage } from '@poky-dev/slide-message';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import './controls.css';
 

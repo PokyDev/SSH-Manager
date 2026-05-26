@@ -1,4 +1,4 @@
-import { useSlideMessage } from '../../utils/slide-message';
+import { useSlideMessage } from '@poky-dev/slide-message';
 import './semaphore.css';
 
 export default function Semaphore() {

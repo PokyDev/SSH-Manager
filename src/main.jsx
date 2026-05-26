@@ -1,4 +1,5 @@
-import { SlideMessageProvider } from './utils/slide-message';
+import { SlideMessageProvider } from '@poky-dev/slide-message';
+import '@poky-dev/slide-message/dist/slide-message.css';
 
 import React from "react";
 import ReactDOM from "react-dom/client";
