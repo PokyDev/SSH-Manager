@@ -4,7 +4,7 @@ import './semaphore.css';
 export default function Semaphore() {
   const { notify } = useSlideMessage();
 
-  const handleUnimplemented = () => notify({ position: 'top-left' });
+  const handleUnimplemented = () => notify({ position: 'top-left', offsetY: 56 });
 
   return (
     <div className="semaphore">

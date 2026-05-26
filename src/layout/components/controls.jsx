@@ -13,7 +13,7 @@ export default function Controls() {
         className="controls__btn controls__btn--theme"
         title="Tema"
         aria-label="Tema"
-        onClick={() => notify({ position: 'top-right' })}
+        onClick={() => notify({ position: 'top-right', offsetY: 56 })}
       >
         <svg width="14" height="14" viewBox="0 0 16 16">
           <circle cx="8" cy="8" r="3.5" fill="currentColor" />

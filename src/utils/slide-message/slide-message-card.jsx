@@ -49,6 +49,8 @@ export const ANIMATION_DURATION_EXIT  = 200; // ms
    ├── text     {string}  — Texto personalizado (opcional)
    ├── position {string}  — 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right'
    ├── duration {number}  — Duración visible en ms
+   ├── offsetX  {number}  — Distancia en px al borde horizontal cercano (default: 20)
+   ├── offsetY  {number}  — Distancia en px al borde vertical cercano (default: 20)
    └── onDone   {func}    — Callback al finalizar el ciclo completo de animación
 */
 export default function SlideMessageCard({
@@ -56,6 +58,8 @@ export default function SlideMessageCard({
   text,
   position = 'top-left',
   duration = 2000,
+  offsetX  = 20,
+  offsetY  = 20,
   onDone,
 }) {
   const safePosition = VALID_POSITIONS.includes(position) ? position : 'top-left';
@@ -104,7 +108,16 @@ export default function SlideMessageCard({
   ].join(' ');
 
   return (
-    <div className={rootClasses} role="status" aria-live="polite" aria-atomic="true">
+    <div
+      className={rootClasses}
+      role="status"
+      aria-live="polite"
+      aria-atomic="true"
+      style={{
+        '--sm-offset-x': `${offsetX}px`,
+        '--sm-offset-y': `${offsetY}px`,
+      }}
+    >
       <div className={cardClasses}>
 
         <div className="slide-message__icon" aria-hidden="true">

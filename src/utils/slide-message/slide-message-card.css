@@ -3,34 +3,32 @@
    Sistema de mensajes deslizantes — SSH Manager Design System
    ============================================================ */
 
-/* --- Contenedor posicionado --- */
+/* Las variables --sm-offset-x y --sm-offset-y se inyectan
+   desde SlideMessageCard via el atributo style del elemento raíz */
 .slide-message {
   position: fixed;
   z-index: 9999;
   pointer-events: none;
-
-  /* Posiciones con márgenes de borde */
-  --sm-margin: 20px;
 }
 
 .slide-message--top-left {
-  top: calc(36px + var(--sm-margin)); /* Respeta la titlebar de 36px */
-  left: var(--sm-margin);
+  top: var(--sm-offset-y);
+  left: var(--sm-offset-x);
 }
 
 .slide-message--top-right {
-  top: calc(36px + var(--sm-margin));
-  right: var(--sm-margin);
+  top: var(--sm-offset-y);
+  right: var(--sm-offset-x);
 }
 
 .slide-message--bottom-left {
-  bottom: var(--sm-margin);
-  left: var(--sm-margin);
+  bottom: var(--sm-offset-y);
+  left: var(--sm-offset-x);
 }
 
 .slide-message--bottom-right {
-  bottom: var(--sm-margin);
-  right: var(--sm-margin);
+  bottom: var(--sm-offset-y);
+  right: var(--sm-offset-x);
 }
 
 /* --- Tarjeta del mensaje --- */
@@ -49,6 +47,9 @@
 
   /* Animación: opacity + transform */
   will-change: opacity, transform;
+
+  /* No Select */
+  user-select: none;
 }
 
 /* --- Ícono del mensaje --- */

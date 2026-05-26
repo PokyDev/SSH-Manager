@@ -42,6 +42,8 @@ export function SlideMessageProvider({ children }) {
     text,
     position = 'top-left',
     duration = 2000,
+    offsetX  = 20,
+    offsetY  = 20,
   } = {}) => {
     setIsBusy(busy => {
       if (busy) return true;
@@ -54,6 +56,8 @@ export function SlideMessageProvider({ children }) {
         text,
         position: safePosition,
         duration,
+        offsetX,
+        offsetY,
       });
 
       return true;
@@ -84,6 +88,8 @@ export function SlideMessageProvider({ children }) {
           text={activeMessage.text}
           position={activeMessage.position}
           duration={activeMessage.duration}
+          offsetX={activeMessage.offsetX}
+          offsetY={activeMessage.offsetY}
           onDone={handleDone}
         />
       )}
