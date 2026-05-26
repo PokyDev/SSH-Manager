@@ -29,14 +29,7 @@
     display: flex;
     align-items: center;
     flex-shrink: 0;
-}
-
-.titlebar__center {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 0;
+    gap: 8px;
 }
 
 .titlebar__title {

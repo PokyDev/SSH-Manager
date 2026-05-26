@@ -28,6 +28,30 @@
 
 .controls__btn--theme {
     margin-right: 4px;
+    position: relative;
+}
+
+.controls__theme-icon {
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    transition: opacity var(--duration-base) var(--ease-out);
+}
+
+.controls__theme-icon--sun {
+    opacity: 1;
+}
+
+.controls__theme-icon--moon {
+    opacity: 0;
+}
+
+[data-theme="dark"] .controls__theme-icon--sun {
+    opacity: 0;
+}
+
+[data-theme="dark"] .controls__theme-icon--moon {
+    opacity: 1;
 }
 
 .controls__btn--close:hover {

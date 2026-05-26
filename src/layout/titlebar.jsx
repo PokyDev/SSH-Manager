@@ -4,21 +4,23 @@ import './titlebar.css';
 import Semaphore from './components/semaphore';
 import Controls from './components/controls';
 
-export default function Titlebar({ title = "Duck Manager" }) {
+export default function Titlebar({ onThemeToggle }) {
   return (
     <nav className="titlebar" data-tauri-drag-region>
 
       <div className="titlebar__left">
         <Semaphore />
-      </div>
-
-      <div className="titlebar__center" data-tauri-drag-region>
-        <span className="titlebar__title" data-tauri-drag-region>{title}</span>
+        {/*
+        <span className="titlebar__title" data-tauri-drag-region>
+          Active
+        </span>
+        */}
       </div>
 
       <div className="titlebar__right">
-        <Controls />
+        <Controls onThemeToggle={onThemeToggle} />
       </div>
+
     </nav>
   );
 }
