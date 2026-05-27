@@ -1,0 +1,335 @@
+/* ========================
+   ssh-config-card.css
+   SSH configuration card — DeployMonitor
+   ======================== */
+
+.ssh-config-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.ssh-config-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ssh-config-card__title-group {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.ssh-config-card__title-icon {
+  color: var(--color-gold);
+  flex-shrink: 0;
+}
+
+.ssh-config-card__title {
+  font-family: var(--font-display);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+
+/* ── Connection status badge ── */
+.ssh-config-card__status {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-elevated);
+  transition: all var(--duration-base) var(--ease-out);
+}
+
+.ssh-config-card__status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  transition: background-color var(--duration-base) var(--ease-out),
+              box-shadow var(--duration-base) var(--ease-out);
+}
+
+.ssh-config-card__status-dot--idle {
+  background-color: var(--color-idle);
+}
+
+.ssh-config-card__status-dot--testing {
+  background-color: var(--color-gold);
+  box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.2);
+  animation: dot-pulse 1s ease-in-out infinite;
+}
+
+.ssh-config-card__status-dot--success {
+  background-color: var(--color-success-light);
+  box-shadow: 0 0 0 2px rgba(61, 158, 104, 0.25);
+}
+
+.ssh-config-card__status-dot--error {
+  background-color: var(--color-error-light);
+  box-shadow: 0 0 0 2px rgba(196, 57, 77, 0.25);
+}
+
+@keyframes dot-pulse {
+  0%, 100% { box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.2); }
+  50%       { box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.08); }
+}
+
+.ssh-config-card__status-label {
+  font-family: var(--font-ui);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  white-space: nowrap;
+  transition: color var(--duration-base) var(--ease-out);
+}
+
+.ssh-config-card__status--success .ssh-config-card__status-label {
+  color: var(--color-success-light);
+}
+
+.ssh-config-card__status--error .ssh-config-card__status-label {
+  color: var(--color-error-light);
+}
+
+.ssh-config-card__status--testing .ssh-config-card__status-label {
+  color: var(--color-gold);
+}
+
+/* ── Fields ── */
+.ssh-config-card__fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.ssh-config-field {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.ssh-config-field__label {
+  font-family: var(--font-ui);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  white-space: nowrap;
+  min-width: 110px;
+}
+
+.ssh-config-field__row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex: 1;
+  min-width: 0;
+}
+
+.ssh-config-field__input {
+  flex: 1;
+  height: 32px;
+  padding: 0 var(--space-3);
+  background: var(--bg-base);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  font-family: var(--font-code);
+  font-size: var(--text-xs);
+  color: var(--text-primary);
+  outline: none;
+  transition: border-color var(--duration-fast) var(--ease-out),
+              box-shadow var(--duration-fast) var(--ease-out),
+              color var(--duration-fast) var(--ease-out);
+  min-width: 0;
+}
+
+.ssh-config-field__input::placeholder {
+  color: var(--text-muted);
+  font-family: var(--font-ui);
+}
+
+.ssh-config-field__input:read-only {
+  color: var(--text-secondary);
+  cursor: default;
+}
+
+.ssh-config-field__input:not(:read-only):focus {
+  border-color: var(--color-gold);
+  box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.15);
+}
+
+.ssh-config-field__input--editable {
+  color: var(--text-primary);
+  border-color: var(--color-gold);
+  box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.12);
+}
+
+/* ── Botones de campo ── */
+.ssh-config-field__btn {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  height: 32px;
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-default);
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  font-family: var(--font-ui);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background-color var(--duration-fast) var(--ease-out),
+              color var(--duration-fast) var(--ease-out),
+              border-color var(--duration-fast) var(--ease-out);
+  white-space: nowrap;
+}
+
+.ssh-config-field__btn:hover {
+  background: var(--bg-overlay);
+  border-color: var(--border-strong);
+  color: var(--text-primary);
+}
+
+.ssh-config-field__btn--save {
+  border-color: var(--color-gold);
+  background: rgba(212, 175, 55, 0.08);
+  color: var(--color-gold);
+}
+
+.ssh-config-field__btn--save:hover {
+  background: rgba(212, 175, 55, 0.16);
+  border-color: var(--color-gold);
+  color: var(--color-gold);
+}
+
+.ssh-config-field__btn--icon-only {
+  width: 32px;
+  padding: 0;
+}
+
+/* ── Acciones principales ── */
+.ssh-config-card__actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.ssh-config-card__actions-divider {
+  width: 1px;
+  height: 30px;
+  background: var(--border-default);
+  flex-shrink: 0;
+}
+
+.ssh-config-card__btn-connect {
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: 0 var(--space-4);
+  background: var(--color-gold);
+  color: var(--color-ink);
+  border: none;
+  border-radius: var(--radius-md);
+  font-family: var(--font-ui);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: filter var(--duration-fast) var(--ease-out),
+              box-shadow var(--duration-fast) var(--ease-out),
+              transform var(--duration-fast) var(--ease-out);
+  white-space: nowrap;
+}
+
+.ssh-config-card__btn-connect:hover {
+  filter: brightness(1.08);
+  box-shadow: var(--shadow-gold);
+}
+
+.ssh-config-card__btn-connect:active {
+  filter: brightness(0.95);
+  transform: scale(0.98);
+}
+
+.ssh-config-card__btn-test {
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: 0 var(--space-3);
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  font-family: var(--font-ui);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background-color var(--duration-fast) var(--ease-out),
+              color var(--duration-fast) var(--ease-out),
+              border-color var(--duration-fast) var(--ease-out);
+  white-space: nowrap;
+}
+
+.ssh-config-card__btn-test:hover:not(:disabled) {
+  background: var(--bg-overlay);
+  border-color: var(--border-strong);
+  color: var(--text-primary);
+}
+
+.ssh-config-card__btn-test:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ssh-config-card__btn-test--testing {
+  border-color: var(--color-gold);
+  color: var(--color-gold);
+}
+
+/* ── Spinner ── */
+.btn-spinner {
+  width: 12px;
+  height: 12px;
+  border: 1.5px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ssh-config-card__status-dot--testing { animation: none; }
+  .btn-spinner { animation: none; }
+}
