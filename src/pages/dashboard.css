@@ -34,6 +34,7 @@
   flex-direction: column;
   overflow: hidden;
   user-select: none;
+  transition: width var(--duration-slow) var(--ease-out);
 }
 
 /* ── Header del sidebar ── */
@@ -89,7 +90,7 @@
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
   color: var(--text-muted);
-  cursor: not-allowed;
+  cursor: pointer;
   padding: 0;
   transition:
     background-color var(--duration-fast) var(--ease-out),
@@ -97,8 +98,7 @@
     border-color var(--duration-fast) var(--ease-out);
 }
 
-/* Cuando sea funcional: quitar disabled y añadir :hover */
-.sidebar__collapse-btn:not(:disabled):hover {
+.sidebar__collapse-btn:hover {
   background: var(--bg-overlay);
   border-color: var(--border-default);
   color: var(--text-secondary);
@@ -245,6 +245,47 @@
 
 .sidebar__logout-label {
   display: none;
+}
+
+/* ── Collapsed sidebar ── */
+.sidebar--collapsed {
+  width: 52px;
+}
+
+.sidebar--collapsed .sidebar__header {
+  justify-content: center;
+  padding: var(--space-3) 0;
+}
+
+.sidebar--collapsed .sidebar__logo {
+  display: none;
+}
+
+.sidebar--collapsed .sidebar__item {
+  justify-content: center;
+  padding: 0;
+  gap: 0;
+}
+
+.sidebar--collapsed .sidebar__item-label {
+  display: none;
+}
+
+.sidebar--collapsed .sidebar__bottom {
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) 0;
+}
+
+.sidebar--collapsed .sidebar__status-label {
+  display: none;
+}
+
+.sidebar--collapsed .sidebar__logout-btn {
+  width: 34px;
+  height: 34px;
 }
 
 /* ══════════════════════════════

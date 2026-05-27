@@ -11,6 +11,7 @@ import {
   Sliders,
   LogOut,
   PanelLeftClose,
+  PanelLeftOpen,
 } from 'lucide-react';
 import EmptyState from '../utils/empty-state';
 import { useNavStore } from '../stores/use-nav-store';
@@ -139,11 +140,16 @@ function TerminalPanel({ isOpen, onToggle, height, onHeightChange }) {
 }
 
 /* ── Sidebar ── */
-function Sidebar({ activeSection, onNavigate, connectionStatus }) {
+function Sidebar({ activeSection, onNavigate, connectionStatus, collapsed, onToggleCollapse }) {
   const goToLanding = useNavStore((s) => s.goToLanding);
 
+  const CollapseIcon = collapsed ? PanelLeftOpen : PanelLeftClose;
+
   return (
-    <aside className="sidebar" aria-label="Navegación principal">
+    <aside
+      className={`sidebar${collapsed ? ' sidebar--collapsed' : ''}`}
+      aria-label="Navegación principal"
+    >
 
       {/* ── Header del sidebar: logo + botón colapsar ── */}
       <div className="sidebar__header">
@@ -168,14 +174,13 @@ function Sidebar({ activeSection, onNavigate, connectionStatus }) {
           </span>
         </div>
 
-        {/* Botón colapsar — funcionalidad pendiente */}
         <button
           className="sidebar__collapse-btn"
-          aria-label="Colapsar barra de navegación"
-          title="Colapsar barra de navegación"
-          disabled
+          onClick={onToggleCollapse}
+          aria-label={collapsed ? 'Expandir barra de navegación' : 'Colapsar barra de navegación'}
+          title={collapsed ? 'Expandir' : 'Colapsar'}
         >
-          <PanelLeftClose size={15} strokeWidth={1.5} />
+          <CollapseIcon size={15} strokeWidth={1.5} />
         </button>
       </div>
 
@@ -187,6 +192,7 @@ function Sidebar({ activeSection, onNavigate, connectionStatus }) {
             className={`sidebar__item ${activeSection === id ? 'sidebar__item--active' : ''}`}
             onClick={() => onNavigate(id)}
             aria-current={activeSection === id ? 'page' : undefined}
+            title={collapsed ? label : undefined}
           >
             <Icon size={18} strokeWidth={1.5} className="sidebar__item-icon" aria-hidden="true" />
             <span className="sidebar__item-label">{label}</span>
@@ -237,6 +243,9 @@ export default function Dashboard() {
   const [terminalOpen, setTerminalOpen] = useState(false);
   const [terminalHeight, setTerminalHeight] = useState(TERMINAL_DEFAULT_H);
   const [connectionStatus] = useState('disconnected');
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  const toggleSidebar = useCallback(() => setSidebarCollapsed((v) => !v), []);
 
   return (
     <div className="dashboard">
@@ -244,6 +253,8 @@ export default function Dashboard() {
         activeSection={activeSection}
         onNavigate={setActiveSection}
         connectionStatus={connectionStatus}
+        collapsed={sidebarCollapsed}
+        onToggleCollapse={toggleSidebar}
       />
 
       <div className="dashboard__main">
