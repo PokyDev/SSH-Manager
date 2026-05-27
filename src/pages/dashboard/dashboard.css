@@ -1,0 +1,30 @@
+/* ========================
+   dashboard.css
+   Dashboard layout — DeployMonitor
+   ======================== */
+
+.dashboard {
+  display: flex;
+  width: 100%;
+  height: calc(100vh - 36px);
+  margin-top: 36px;
+  background-color: var(--bg-base);
+  overflow: hidden;
+}
+
+.dashboard__main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+}
+
+.content-area {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
