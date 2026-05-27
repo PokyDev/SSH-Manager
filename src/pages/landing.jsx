@@ -7,29 +7,14 @@ import {
   CornerDownLeft,
 } from 'lucide-react';
 import { useSlideMessage } from '@poky-dev/slide-message';
+import { useNavStore } from '../stores/use-nav-store';
 import './landing.css';
 
 const SHORTCUTS = [
-  {
-    icon: Terminal,
-    label: 'Conectar instancia',
-    keys: ['Ctrl', 'Shift', 'C'],
-  },
-  {
-    icon: Activity,
-    label: 'Monitoreo en vivo',
-    keys: ['Ctrl', 'M'],
-  },
-  {
-    icon: FolderOpen,
-    label: 'Ejecutar script',
-    keys: ['Ctrl', 'Enter'],
-  },
-  {
-    icon: Settings,
-    label: 'Configuración',
-    keys: ['Ctrl', ','],
-  },
+  { icon: Terminal,  label: 'Conectar instancia', keys: ['Ctrl', 'Shift', 'C'] },
+  { icon: Activity,  label: 'Monitoreo en vivo',  keys: ['Ctrl', 'M'] },
+  { icon: FolderOpen,label: 'Ejecutar script',    keys: ['Ctrl', 'Enter'] },
+  { icon: Settings,  label: 'Configuración',      keys: ['Ctrl', ','] },
 ];
 
 function MeshBackground() {
@@ -43,13 +28,7 @@ function MeshBackground() {
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
       dots.push(
-        <circle
-          key={`${r}-${c}`}
-          cx={c * gapX}
-          cy={r * gapY}
-          r={dotSize}
-          fill="currentColor"
-        />
+        <circle key={`${r}-${c}`} cx={c * gapX} cy={r * gapY} r={dotSize} fill="currentColor" />
       );
     }
   }
@@ -57,7 +36,7 @@ function MeshBackground() {
   return (
     <svg
       className="landing__mesh"
-      viewBox={`0 0 700 600`}
+      viewBox="0 0 700 600"
       preserveAspectRatio="xMidYMid slice"
       aria-hidden="true"
       style={{ color: 'var(--border-default)' }}
@@ -67,38 +46,26 @@ function MeshBackground() {
   );
 }
 
-function ShortcutCard({ icon: Icon, label, keys, onExecute }) {
+function ShortcutCard({ icon: Icon, label, keys }) {
   const { notify } = useSlideMessage();
-
-  const handleExecute = () => {
-    notify({ position: 'top-left', offsetY: 56 });
-  };
-
   return (
     <div className="landing__shortcut-card">
       <div className="landing__shortcut-row">
         <span className="landing__shortcut-label">{label}</span>
-        <Icon
-          className="landing__shortcut-icon"
-          size={14}
-          strokeWidth={1.5}
-          aria-hidden="true"
-        />
+        <Icon className="landing__shortcut-icon" size={14} strokeWidth={1.5} aria-hidden="true" />
       </div>
       <div className="landing__shortcut-row">
         <div className="landing__shortcut-keys">
           {keys.map((key, i) => (
             <React.Fragment key={key}>
               <kbd className="kbd">{key}</kbd>
-              {i < keys.length - 1 && (
-                <span className="kbd-sep">+</span>
-              )}
+              {i < keys.length - 1 && <span className="kbd-sep">+</span>}
             </React.Fragment>
           ))}
         </div>
         <button
           className="landing__shortcut-run"
-          onClick={handleExecute}
+          onClick={() => notify({ position: 'top-left', offsetY: 56 })}
           title="Ejecutar"
           aria-label={`Ejecutar ${label}`}
         >
@@ -110,60 +77,45 @@ function ShortcutCard({ icon: Icon, label, keys, onExecute }) {
 }
 
 export default function Landing() {
-  const { notify } = useSlideMessage();
-
-  const handleEnter = () => {
-    notify({ position: 'top-left', offsetY: 56 });
-  };
+  const goToDashboard = useNavStore((s) => s.goToDashboard);
 
   useEffect(() => {
     const onKeyDown = (e) => {
-      if (e.key === 'Enter') handleEnter();
+      if (e.key === 'Enter') goToDashboard();
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, []);
+  }, [goToDashboard]);
+
   return (
     <div className="landing" role="main">
       <MeshBackground />
-
       <div className="landing__content">
-        {/* Mascot */}
         <img
           src="/icon/ssh-manager-icon.png"
           alt="DeployMonitor mascota — pato coronado"
           className="landing__logo"
           draggable={false}
         />
-
-        {/* App name */}
         <h1 className="landing__name">
           Deploy<span className="landing__name-accent">Monitor</span>
         </h1>
-
-        {/* Tagline */}
         <p className="landing__tagline">
           <span className="landing__tagline-quote">"</span>
           Monitorea y automatiza tus instancias en tiempo real
           <span className="landing__tagline-quote">"</span>
         </p>
-
         <div className="landing__divider" aria-hidden="true" />
-
-        {/* Shortcut cards */}
-        <div
-          className="landing__shortcuts"
-          role="list"
-          aria-label="Atajos de teclado disponibles"
-        >
+        <div className="landing__shortcuts" role="list" aria-label="Atajos de teclado disponibles">
           {SHORTCUTS.map((shortcut) => (
             <div key={shortcut.label} role="listitem">
               <ShortcutCard {...shortcut} />
             </div>
           ))}
         </div>
-
-        <p className="landing__hint">USA ENTER PARA ACCEDER AL DASHBOARD </p>
+        <button className="landing__hint" onClick={goToDashboard} aria-label="Acceder al dashboard">
+          USA ENTER PARA ACCEDER AL DASHBOARD
+        </button>
       </div>
     </div>
   );

@@ -225,6 +225,8 @@
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--color-gold);
+  background: transparent;
+  border: none;
   animation:
     landing-fade-up 0.5s var(--ease-out) 0.4s both,
     landing-pulse 2.5s ease-in-out 1s infinite;

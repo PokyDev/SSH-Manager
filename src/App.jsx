@@ -5,6 +5,8 @@ import './styles/global.css';
 
 import Titlebar from './layout/titlebar';
 import Landing from './pages/landing';
+import Dashboard from './pages/dashboard';
+import { useNavStore } from './stores/use-nav-store';
 
 /* ── Gestión de tema ── */
 function applyTheme(theme) {
@@ -12,12 +14,9 @@ function applyTheme(theme) {
   const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
   const resolved = theme === 'system' ? (prefersDark ? 'dark' : 'light') : theme;
 
-  /* Activar transición suave antes de cambiar el tema */
   root.classList.add('theme-transitioning');
-
   root.setAttribute('data-theme', resolved);
 
-  /* Desactivar transición al terminar */
   const ms = parseInt(getComputedStyle(root).getPropertyValue('--duration-slow')) || 350;
   setTimeout(() => root.classList.remove('theme-transitioning'), ms + 50);
 }
@@ -32,7 +31,6 @@ function useTheme() {
     localStorage.setItem('dm-theme', theme);
   }, [theme]);
 
-  /* Responder a cambios del sistema cuando el tema es 'system' */
   useEffect(() => {
     if (theme !== 'system') return;
     const mq = window.matchMedia('(prefers-color-scheme: dark)');
@@ -42,9 +40,8 @@ function useTheme() {
   }, [theme]);
 
   const toggle = () => {
-    setTheme((current) => {
-      const root = document.documentElement;
-      const currentActual = root.getAttribute('data-theme');
+    setTheme(() => {
+      const currentActual = document.documentElement.getAttribute('data-theme');
       return currentActual === 'dark' ? 'light' : 'dark';
     });
   };
@@ -54,11 +51,21 @@ function useTheme() {
 
 export default function App() {
   const { toggle } = useTheme();
+  const { view, phase } = useNavStore();
+
+  const transitionClass =
+    phase === 'exit'  ? 'view-exit'  :
+    phase === 'enter' ? 'view-enter' :
+    '';
 
   return (
     <>
       <Titlebar title="DeployMonitor" onThemeToggle={toggle} />
-      <Landing />
+
+      <div className={`view-wrapper ${transitionClass}`}>
+        {view === 'landing'   && <Landing />}
+        {view === 'dashboard' && <Dashboard />}
+      </div>
     </>
   );
 }
