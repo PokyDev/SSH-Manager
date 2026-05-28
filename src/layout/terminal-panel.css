@@ -76,6 +76,15 @@
   border: 1px solid #2A2A2A;
   border-radius: var(--radius-sm);
   padding: 2px 6px;
+  transition: color var(--duration-base) var(--ease-out),
+              background-color var(--duration-base) var(--ease-out),
+              border-color var(--duration-base) var(--ease-out);
+}
+
+.terminal-panel__header-badge--active {
+  color: var(--color-success-light);
+  background: rgba(61, 158, 104, 0.1);
+  border-color: rgba(61, 158, 104, 0.3);
 }
 
 .terminal-panel__toggle {
@@ -119,6 +128,45 @@
 
 .terminal-panel__cursor {
   animation: cursor-blink 1.1s step-end infinite;
+}
+
+.terminal-panel__line {
+  min-height: 1.6em;
+  line-height: 1.6;
+  white-space: pre;
+  font-family: var(--font-code);
+  font-size: 13px;
+}
+
+.terminal-panel__line--blank {
+  min-height: 0.5em;
+}
+
+.terminal-panel__line--cmd {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.terminal-panel__line--idle {
+  display: flex;
+  flex-wrap: nowrap;
+}
+
+.terminal-panel__prompt {
+  color: #4EC9B0;
+  flex-shrink: 0;
+}
+
+.terminal-panel__command {
+  color: #E8E8E8;
+}
+
+.terminal-panel__line--out {
+  color: #D4D0C4;
+}
+
+.terminal-panel__line--error {
+  color: var(--color-error-light);
 }
 
 @keyframes cursor-blink {

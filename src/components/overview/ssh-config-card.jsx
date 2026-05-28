@@ -2,63 +2,39 @@ import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { open } from '@tauri-apps/plugin-dialog';
 import { KeyRound, FolderOpen, Pencil, Save, Plug, Wifi } from 'lucide-react';
+import { useSshStore, TEST_STATUS, STATUS_LABELS } from '../../stores/use-ssh-store';
+import { useTerminalStore } from '../../stores/use-terminal-store';
+import { simulateSshConnection } from '../../utils/ssh-connection-simulator';
 import './ssh-config-card.css';
 
-/*
-  ssh-config-card.jsx
-  Card de configuración de conexión SSH — DeployMonitor
-
-  Funcionalidad:
-  - Campo .pem:  solo lectura; botón "Explorar" abre el file picker nativo de Tauri.
-                 La ruta seleccionada se muestra en el input pero el archivo
-                 nunca sale del proceso nativo de Rust.
-  - Campo SSH:   solo lectura por defecto con valor inicial `DEFAULT_CONNECTION`.
-                 Botón "Editar" lo habilita, "Guardar" lo cierra.
-- Botón "Probar Conexión": invoca el comando Tauri `ssh_test_connection`.
-                  Si la conexión es exitosa: muestra "Conexión Verificada" 3 s,
-                  luego transita a "Ya puedes Conectarte" (estado READY permanente).
-                  Si falla, muestra ERROR durante 3 s y vuelve a IDLE.
-  - Botón "Conectar": diseño listo; lógica pendiente de backend.
-*/
-
-// ── Valor por defecto del campo de conexión ───────────────────────────
-// Se muestra sólo el tramo `usuario@host`; el archivo .pem se gestiona
-// de forma separada con el file picker.
 const DEFAULT_CONNECTION = 'ubuntu@ec2-3-223-213-238.compute-1.amazonaws.com';
-
-// ── Estados del test de conexión ──────────────────────────────────────
-const TEST_STATUS = {
-  IDLE:    'idle',
-  TESTING: 'testing',
-  SUCCESS: 'success',
-  READY:   'ready',
-  ERROR:   'error',
-};
-
-const STATUS_LABELS = {
-  [TEST_STATUS.IDLE]:    'Sin verificar',
-  [TEST_STATUS.TESTING]: 'Verificando...',
-  [TEST_STATUS.SUCCESS]: 'Conexión Verificada',
-  [TEST_STATUS.READY]:   'Ya puedes Conectarte',
-  [TEST_STATUS.ERROR]:   'Sin conexión',
-};
 
 export default function SshConfigCard() {
   const [pemPath, setPemPath]               = useState(() => localStorage.getItem('dm-pem-path') || '');
   const [connectionString, setConnectionString] = useState(() => localStorage.getItem('dm-connection-string') || DEFAULT_CONNECTION);
   const [isEditingConn, setIsEditingConn]   = useState(false);
-  const [testStatus, setTestStatus]         = useState(TEST_STATUS.IDLE);
-  const [errorMessage, setErrorMessage]     = useState('');
+
+  const testStatus   = useSshStore((s) => s.testStatus);
+  const errorMessage = useSshStore((s) => s.errorMessage);
+  const setTestStatus      = useSshStore((s) => s.setTestStatus);
+  const setErrorMessage    = useSshStore((s) => s.setErrorMessage);
+  const scheduleReady      = useSshStore((s) => s.scheduleReady);
+  const scheduleIdle       = useSshStore((s) => s.scheduleIdle);
+  const cancelScheduledReset = useSshStore((s) => s.cancelScheduledReset);
+
+  const cancelRef = useRef(null);
 
   useEffect(() => { localStorage.setItem('dm-pem-path', pemPath); }, [pemPath]);
   useEffect(() => { localStorage.setItem('dm-connection-string', connectionString); }, [connectionString]);
 
-  const connInputRef  = useRef(null);
-  const resetTimerRef = useRef(null);
+  useEffect(() => {
+    return () => {
+      cancelRef.current?.();
+    };
+  }, []);
 
-  // ── Abrir file picker nativo para .pem ────────────────────────────
-  // El archivo .pem nunca se lee aquí: solo recibimos la ruta del
-  // proceso nativo vía tauri-plugin-dialog y la mostramos al usuario.
+  const connInputRef = useRef(null);
+
   const handleBrowsePem = useCallback(async () => {
     try {
       const selected = await open({
@@ -76,7 +52,6 @@ export default function SshConfigCard() {
     }
   }, []);
 
-  // ── Editar / guardar cadena de conexión ───────────────────────────
   const handleEditConn = useCallback(() => {
     setIsEditingConn(true);
     setTimeout(() => connInputRef.current?.focus(), 0);
@@ -86,45 +61,49 @@ export default function SshConfigCard() {
     setIsEditingConn(false);
   }, []);
 
-  // ── Probar conexión (lógica real via Tauri) ───────────────────────
   const handleTestConnection = useCallback(async () => {
     if (testStatus === TEST_STATUS.TESTING) return;
 
-    // Cancelar cualquier reset pendiente de un test anterior
-    if (resetTimerRef.current) clearTimeout(resetTimerRef.current);
+    cancelScheduledReset();
+    cancelRef.current?.();
 
     setTestStatus(TEST_STATUS.TESTING);
     setErrorMessage('');
 
+    const { clearTerminal, addLine, setActive, requestOpen } = useTerminalStore.getState();
+    clearTerminal();
+    requestOpen();
+    setActive(true);
+
+    cancelRef.current = simulateSshConnection({
+      pemPath,
+      connectionString,
+      onLine: addLine,
+      onDone: () => {
+        setActive(false);
+      },
+    });
+
     try {
-      // Invoca el comando Rust `ssh_test_connection`.
-      // El backend lee el .pem desde disco y autentica; nunca devuelve
-      // el contenido del archivo al renderer.
       await invoke('ssh_test_connection', {
         pemPath,
         connectionString,
       });
 
-      // Éxito: mostrar "Conexión Verificada" 3 s, luego transitar a "Ya puedes Conectarte"
       setTestStatus(TEST_STATUS.SUCCESS);
-
-      resetTimerRef.current = setTimeout(() => {
-        setTestStatus(TEST_STATUS.READY);
-      }, 3000);
+      scheduleReady();
     } catch (err) {
-      // El backend serializa los errores como { code, message }.
-      // Guardamos el mensaje para mostrarlo si se necesita en el futuro.
+      cancelRef.current?.();
+      const { addLine: addLineNow, setActive: setActiveNow } = useTerminalStore.getState();
       const message = err?.message ?? String(err);
       setErrorMessage(message);
       setTestStatus(TEST_STATUS.ERROR);
-
-      // Volver a IDLE tras 3 s para que el usuario pueda reintentar
-      resetTimerRef.current = setTimeout(() => {
-        setTestStatus(TEST_STATUS.IDLE);
-        setErrorMessage('');
-      }, 3000);
+      addLineNow({ type: 'blank' });
+      addLineNow({ type: 'error', text: `Connection error: ${message}` });
+      setActiveNow(false);
+      scheduleIdle();
     }
-  }, [testStatus, pemPath, connectionString]);
+  }, [testStatus, pemPath, connectionString, setTestStatus, setErrorMessage, scheduleReady, scheduleIdle, cancelScheduledReset]);
 
   const isTesting = testStatus === TEST_STATUS.TESTING;
 
@@ -201,7 +180,7 @@ export default function SshConfigCard() {
               value={connectionString}
               readOnly={!isEditingConn}
               onChange={(e) => setConnectionString(e.target.value)}
-              placeholder="usuario@host-o-ip"
+              placeholder="usuario@host o ssh -i key.pem usuario@host"
               aria-label="Cadena de conexión SSH"
             />
             <button

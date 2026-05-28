@@ -1,5 +1,6 @@
-import React, { useRef, useCallback } from 'react';
+import React, { useRef, useCallback, useEffect } from 'react';
 import { ChevronUp, ChevronDown } from 'lucide-react';
+import { useTerminalStore } from '../stores/use-terminal-store';
 import './terminal-panel.css';
 
 const TERMINAL_MIN_H = 36;
@@ -8,11 +9,20 @@ const TERMINAL_DEFAULT_H = 220;
 export { TERMINAL_MIN_H, TERMINAL_DEFAULT_H };
 
 export default function TerminalPanel({ isOpen, onToggle, height, onHeightChange }) {
+  const lines = useTerminalStore((s) => s.lines);
+  const isActive = useTerminalStore((s) => s.isActive);
   const panelRef = useRef(null);
+  const bodyRef = useRef(null);
   const startY = useRef(0);
   const startH = useRef(0);
   const rafId = useRef(0);
   const nextH = useRef(0);
+
+  useEffect(() => {
+    if (bodyRef.current) {
+      bodyRef.current.scrollTop = bodyRef.current.scrollHeight;
+    }
+  }, [lines]);
 
   const onMouseDown = useCallback((e) => {
     e.preventDefault();
@@ -47,6 +57,41 @@ export default function TerminalPanel({ isOpen, onToggle, height, onHeightChange
     window.addEventListener('mouseup', onUp);
   }, [height, onHeightChange]);
 
+  const renderLine = (line, i) => {
+    switch (line.type) {
+      case 'cmd':
+        return (
+          <div key={i} className="terminal-panel__line terminal-panel__line--cmd">
+            <span className="terminal-panel__prompt">{line.prompt} </span>
+            <span className="terminal-panel__command">{line.command}</span>
+          </div>
+        );
+      case 'out':
+        return (
+          <div key={i} className="terminal-panel__line terminal-panel__line--out">
+            {line.text}
+          </div>
+        );
+      case 'blank':
+        return <div key={i} className="terminal-panel__line terminal-panel__line--blank" />;
+      case 'error':
+        return (
+          <div key={i} className="terminal-panel__line terminal-panel__line--error">
+            {line.text}
+          </div>
+        );
+      case 'idle':
+        return (
+          <div key={i} className="terminal-panel__line terminal-panel__line--idle">
+            <span className="terminal-panel__prompt">{line.prompt} </span>
+            <span className="terminal-panel__cursor">▌</span>
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
     <div
       ref={panelRef}
@@ -70,7 +115,9 @@ export default function TerminalPanel({ isOpen, onToggle, height, onHeightChange
             <line x1="12" y1="19" x2="20" y2="19" />
           </svg>
           <span className="terminal-panel__header-title">Terminal</span>
-          <span className="terminal-panel__header-badge">inactivo</span>
+          <span className={`terminal-panel__header-badge${isActive ? ' terminal-panel__header-badge--active' : ''}`}>
+            {isActive ? 'activo' : 'inactivo'}
+          </span>
         </div>
         <button
           className="terminal-panel__toggle"
@@ -85,10 +132,14 @@ export default function TerminalPanel({ isOpen, onToggle, height, onHeightChange
       </div>
 
       {isOpen && (
-        <div className="terminal-panel__body">
-          <p className="terminal-panel__placeholder">
-            $ <span className="terminal-panel__cursor">▌</span>
-          </p>
+        <div className="terminal-panel__body" ref={bodyRef}>
+          {lines.length > 0 ? (
+            lines.map(renderLine)
+          ) : (
+            <p className="terminal-panel__placeholder">
+              $ <span className="terminal-panel__cursor">▌</span>
+            </p>
+          )}
         </div>
       )}
     </div>
