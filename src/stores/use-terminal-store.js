@@ -22,6 +22,16 @@ function backendLineToStoreLine(payload) {
   }
 }
 
+// ── Guarda síncrona contra doble registro del listener ────────────────────────
+//
+// React StrictMode (desarrollo) monta → desmonta → monta de nuevo.
+// Como `startListening` es async, la guarda `if (_unlisten) return` del store
+// puede no haberse resuelto antes del segundo montaje, permitiendo que se
+// registren DOS listeners para `terminal:line` y duplicando cada línea.
+// Una variable de módulo se evalúa de forma síncrona, eliminando la race.
+
+let _isListening = false;
+
 // ── Store ─────────────────────────────────────────────────────────────────────
 
 export const useTerminalStore = create((set, get) => ({
@@ -41,19 +51,23 @@ export const useTerminalStore = create((set, get) => ({
   // Suscribirse al evento `terminal:line` emitido por el backend.
   // Debe llamarse una sola vez al montar la app.
   startListening: async () => {
-    // Evitar doble suscripción si el store ya tiene un listener activo
-    if (get()._unlisten) return;
+    if (_isListening) return;
+    _isListening = true;
 
-    const unlisten = await listen('terminal:line', (event) => {
-      const line = backendLineToStoreLine(event.payload);
-      set((state) => ({ lines: [...state.lines, line] }));
-    });
-
-    set({ _unlisten: unlisten });
+    try {
+      const unlisten = await listen('terminal:line', (event) => {
+        const line = backendLineToStoreLine(event.payload);
+        set((state) => ({ lines: [...state.lines, line] }));
+      });
+      set({ _unlisten: unlisten });
+    } catch {
+      _isListening = false;
+    }
   },
 
   // Liberar el listener (útil en hot-reload de desarrollo)
   stopListening: () => {
+    _isListening = false;
     const { _unlisten } = get();
     if (_unlisten) {
       _unlisten();
