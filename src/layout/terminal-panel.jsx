@@ -8,29 +8,48 @@ const TERMINAL_DEFAULT_H = 220;
 export { TERMINAL_MIN_H, TERMINAL_DEFAULT_H };
 
 export default function TerminalPanel({ isOpen, onToggle, height, onHeightChange }) {
+  const panelRef = useRef(null);
   const startY = useRef(0);
   const startH = useRef(0);
+  const rafId = useRef(0);
+  const nextH = useRef(0);
 
   const onMouseDown = useCallback((e) => {
     e.preventDefault();
     startY.current = e.clientY;
     startH.current = height;
+    nextH.current = height;
+
+    if (panelRef.current) {
+      panelRef.current.classList.add('terminal-panel--dragging');
+    }
 
     const onMove = (mv) => {
       const delta = startY.current - mv.clientY;
-      const newH = Math.max(TERMINAL_MIN_H + 1, Math.min(startH.current + delta, window.innerHeight * 0.6));
-      onHeightChange(newH);
+      nextH.current = Math.max(TERMINAL_MIN_H + 1, Math.min(startH.current + delta, window.innerHeight * 0.6));
+      cancelAnimationFrame(rafId.current);
+      rafId.current = requestAnimationFrame(() => {
+        onHeightChange(nextH.current);
+      });
     };
+
     const onUp = () => {
+      cancelAnimationFrame(rafId.current);
+      onHeightChange(nextH.current);
+      if (panelRef.current) {
+        panelRef.current.classList.remove('terminal-panel--dragging');
+      }
       window.removeEventListener('mousemove', onMove);
       window.removeEventListener('mouseup', onUp);
     };
+
     window.addEventListener('mousemove', onMove);
     window.addEventListener('mouseup', onUp);
   }, [height, onHeightChange]);
 
   return (
     <div
+      ref={panelRef}
       className="terminal-panel"
       style={{ height: isOpen ? height : TERMINAL_MIN_H }}
       aria-label="Panel de terminal"

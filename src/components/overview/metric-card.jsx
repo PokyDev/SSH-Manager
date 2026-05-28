@@ -83,6 +83,8 @@ export default function MetricCard({
 
   const progressPct = Math.min(100, (value / maxValue) * 100);
 
+  const gradId = label.replace(/\s+/g, '-').toLowerCase();
+
   return (
     <div className="metric-card">
       {/* Header */}
@@ -125,7 +127,7 @@ export default function MetricCard({
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={chartData} margin={{ top: 2, right: 0, left: 0, bottom: 0 }}>
               <defs>
-                <linearGradient id={`grad-${label}`} x1="0" y1="0" x2="0" y2="1">
+                <linearGradient id={`grad-${gradId}`} x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%"  stopColor={areaColor} stopOpacity={0.25} />
                   <stop offset="95%" stopColor={areaColor} stopOpacity={0.02} />
                 </linearGradient>
@@ -139,7 +141,7 @@ export default function MetricCard({
                 dataKey="v"
                 stroke={areaColor}
                 strokeWidth={1.5}
-                fill={`url(#grad-${label})`}
+                fill={`url(#grad-${gradId})`}
                 dot={false}
                 activeDot={{ r: 3, fill: areaColor, strokeWidth: 0 }}
                 isAnimationActive={true}

@@ -12,6 +12,11 @@
   transition: height var(--duration-base) var(--ease-out);
   position: relative;
   overflow: hidden;
+  will-change: height;
+}
+
+.terminal-panel--dragging {
+  transition: none !important;
 }
 
 .terminal-panel__resize {
