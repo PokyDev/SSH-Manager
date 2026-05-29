@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import Sidebar from '../../layout/sidebar';
 import TerminalPanel, { TERMINAL_DEFAULT_H } from '../../layout/terminal-panel';
-import { useTerminalStore } from '../../stores/use-terminal-store';
+import { useTerminalStore, CONNECTION_STATE } from '../../stores/use-terminal-store';
 import Overview from './overview';
 import Monitoring from './monitoring';
 import Scripts from './scripts';
@@ -19,11 +19,15 @@ export default function Dashboard() {
   const [activeSection, setActiveSection] = useState('dashboard');
   const [terminalOpen, setTerminalOpen] = useState(false);
   const [terminalHeight, setTerminalHeight] = useState(TERMINAL_DEFAULT_H);
-  const [connectionStatus] = useState('disconnected');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   const openRequested = useTerminalStore((s) => s.openRequested);
   const clearOpenRequest = useTerminalStore((s) => s.clearOpenRequest);
+  const connectionState = useTerminalStore((s) => s.connectionState);
+
+  const connectionStatus = connectionState === CONNECTION_STATE.CONNECTED
+    ? 'connected'
+    : 'disconnected';
 
   useEffect(() => {
     if (openRequested) {

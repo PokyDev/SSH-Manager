@@ -1,9 +1,8 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { invoke } from '@tauri-apps/api/core';
 import { open } from '@tauri-apps/plugin-dialog';
 import { KeyRound, FolderOpen, Pencil, Save, Plug, Wifi } from 'lucide-react';
 import { useSshStore, TEST_STATUS, STATUS_LABELS } from '../../stores/use-ssh-store';
-import { useTerminalStore } from '../../stores/use-terminal-store';
+import { useTerminalStore, CONNECTION_STATE } from '../../stores/use-terminal-store';
 import './ssh-config-card.css';
 
 const DEFAULT_CONNECTION = 'ubuntu@ec2-3-223-213-238.compute-1.amazonaws.com';
@@ -35,7 +34,7 @@ function extractSshShortHost(connStr) {
   return full.split('.')[0];
 }
 
-// ── Componente ────────────────────────────────────────────────────────────────
+const NOT_IMPLEMENTED = 'Funcionalidad no implementada';
 
 export default function SshConfigCard() {
   const [pemPath, setPemPath] = useState(
@@ -60,8 +59,6 @@ export default function SshConfigCard() {
   useEffect(() => { localStorage.setItem('dm-pem-path', pemPath); }, [pemPath]);
   useEffect(() => { localStorage.setItem('dm-connection-string', connectionString); }, [connectionString]);
 
-  // ── Explorar archivo .pem ─────────────────────────────────────────────────
-
   const handleBrowsePem = useCallback(async () => {
     try {
       const selected = await open({
@@ -79,8 +76,6 @@ export default function SshConfigCard() {
     }
   }, []);
 
-  // ── Edición de cadena de conexión ─────────────────────────────────────────
-
   const handleEditConn = useCallback(() => {
     setIsEditingConn(true);
     setTimeout(() => connInputRef.current?.focus(), 0);
@@ -90,8 +85,6 @@ export default function SshConfigCard() {
     setIsEditingConn(false);
   }, []);
 
-  // ── Probar conexión (solo validación, sin terminal) ───────────────────────
-
   const handleTestConnection = useCallback(async () => {
     if (testStatus === TEST_STATUS.TESTING) return;
 
@@ -99,90 +92,57 @@ export default function SshConfigCard() {
     setTestStatus(TEST_STATUS.TESTING);
     setErrorMessage('');
 
-    try {
-      await invoke('ssh_test_connection', { pemPath, connectionString });
-      setTestStatus(TEST_STATUS.SUCCESS);
-      scheduleReady();
-    } catch (err) {
-      const message = err?.message ?? String(err);
-      setErrorMessage(message);
-      setTestStatus(TEST_STATUS.ERROR);
-      scheduleIdle();
-    }
+    setErrorMessage(NOT_IMPLEMENTED);
+    setTestStatus(TEST_STATUS.ERROR);
+    scheduleIdle();
   }, [
-    testStatus, pemPath, connectionString,
-    setTestStatus, setErrorMessage, scheduleReady, scheduleIdle, cancelScheduledReset,
+    testStatus,
+    setTestStatus, setErrorMessage, scheduleIdle, cancelScheduledReset,
   ]);
-
-  // ── Conectar — abre terminal y ejecuta flujo SSH real ────────────────────
 
   const handleConnect = useCallback(async () => {
     if (isConnecting) return;
 
     setIsConnecting(true);
 
-    const { clearTerminal, typeCommand, addLine, setActive, requestOpen } = useTerminalStore.getState();
+    const {
+      clearTerminal, typeCommand, addLine, setActive, requestOpen,
+      setConnectionState, setPrompt,
+    } = useTerminalStore.getState();
 
     clearTerminal();
     requestOpen();
     setActive(true);
+    setConnectionState(CONNECTION_STATE.CONNECTING);
 
-    const { dir, file } = splitWindowsPath(pemPath);
+    const { dir } = splitWindowsPath(pemPath);
     const userDir = dir || 'C:\\Users\\Usuario';
-    const pemFile = file || 'key.pem';
     const sshUser = extractSshUser(connectionString);
-    const fallbackPrompt = `${sshUser}@${extractSshShortHost(connectionString)}:~$`;
-    const sshHost = connectionString.split('@')[1] || 'server';
 
-    // ── Navegar al directorio de la clave .pem ────────────────────────────
     await typeCommand('C:\\Users\\>', `cd "${userDir}"`);
     await delay(150);
 
-    // ── Ejecutar comando SSH ───────────────────────────────────────────────
-    await typeCommand(`${userDir}>`, `ssh -i "${pemFile}" ${connectionString}`);
-    addLine({ type: 'blank' });
-    await delay(200);
-
-    // ── Banner de bienvenida del servidor ──────────────────────────────────
-    let linuxPrompt = fallbackPrompt;
-    try {
-      const detectedPrompt = await invoke('ssh_connect', { pemPath, connectionString });
-      linuxPrompt = detectedPrompt || fallbackPrompt;
-    } catch (err) {
-      const message = err?.message ?? String(err);
-      addLine({ type: 'error', text: `Error de conexión: ${message}` });
-      addLine({ type: 'idle', prompt: `${userDir}>` });
-      setActive(false);
-      setIsConnecting(false);
-      return;
-    }
-
-    await delay(400);
-
-    // ── Ejecutar ls ───────────────────────────────────────────────────────
-    await typeCommand(linuxPrompt, 'ls');
-    await delay(200);
-    try {
-      await invoke('ssh_exec', { pemPath, connectionString, command: 'ls -C --width=220' });
-    } catch (err) {
-      const message = err?.message ?? String(err);
-      addLine({ type: 'error', text: `Error: ${message}` });
-    }
-
-    await delay(400);
-
-    // ── Cerrar sesión ─────────────────────────────────────────────────────
-    await typeCommand(linuxPrompt, 'exit');
-    await delay(500);
-    addLine({ type: 'out', text: 'logout' });
-    addLine({ type: 'blank' });
-    addLine({ type: 'out', text: `Connection to ${sshHost} closed.` });
+    addLine({ type: 'error', text: NOT_IMPLEMENTED });
     addLine({ type: 'idle', prompt: `${userDir}>` });
-
     setActive(false);
+    setConnectionState(CONNECTION_STATE.DISCONNECTED);
     setIsConnecting(false);
   }, [isConnecting, pemPath, connectionString]);
 
+  const handleDisconnect = useCallback(() => {
+    const { addLine, setActive, setConnectionState, setPrompt } = useTerminalStore.getState();
+    const { dir } = splitWindowsPath(pemPath);
+    const userDir = dir || 'C:\\Users\\Usuario';
+
+    setConnectionState(CONNECTION_STATE.DISCONNECTED);
+    setActive(false);
+    setPrompt('');
+    addLine({ type: 'out', text: 'Connection closed.' });
+    addLine({ type: 'idle', prompt: `${userDir}>` });
+  }, [pemPath]);
+
+  const connectionState = useTerminalStore((s) => s.connectionState);
+  const isConnected = connectionState === CONNECTION_STATE.CONNECTED;
   const isTesting = testStatus === TEST_STATUS.TESTING;
 
   return (
@@ -296,29 +256,40 @@ export default function SshConfigCard() {
 
       {/* ── Acciones ── */}
       <div className="ssh-config-card__actions">
-        <button
-          className={`ssh-config-card__btn-connect${isConnecting ? ' ssh-config-card__btn-connect--connecting' : ''}`}
-          onClick={handleConnect}
-          disabled={isConnecting}
-          aria-label="Conectar a la instancia SSH"
-        >
-          {isConnecting ? (
-            <>
-              <span className="btn-spinner" aria-hidden="true" />
-              Conectando
-            </>
-          ) : (
-            <>
-              <Plug size={14} strokeWidth={1.5} aria-hidden="true" />
-              Conectar
-            </>
-          )}
-        </button>
+        {isConnected ? (
+          <button
+            className="ssh-config-card__btn-connect ssh-config-card__btn-connect--disconnect"
+            onClick={handleDisconnect}
+            aria-label="Desconectar sesión SSH"
+          >
+            <Plug size={14} strokeWidth={1.5} aria-hidden="true" />
+            Desconectar
+          </button>
+        ) : (
+          <button
+            className={`ssh-config-card__btn-connect${isConnecting ? ' ssh-config-card__btn-connect--connecting' : ''}`}
+            onClick={handleConnect}
+            disabled={isConnecting}
+            aria-label="Conectar a la instancia SSH"
+          >
+            {isConnecting ? (
+              <>
+                <span className="btn-spinner" aria-hidden="true" />
+                Conectando
+              </>
+            ) : (
+              <>
+                <Plug size={14} strokeWidth={1.5} aria-hidden="true" />
+                Conectar
+              </>
+            )}
+          </button>
+        )}
 
         <button
           className={`ssh-config-card__btn-test${isTesting ? ' ssh-config-card__btn-test--testing' : ''}`}
           onClick={handleTestConnection}
-          disabled={isTesting || isConnecting}
+          disabled={isTesting || isConnecting || isConnected}
           aria-label="Probar conexión SSH"
         >
           {isTesting ? (

@@ -1,25 +1,11 @@
-import React, { useRef, useCallback, useEffect } from 'react';
+import React, { useRef, useCallback, useEffect, useState } from 'react';
 import { ChevronUp, ChevronDown } from 'lucide-react';
-import { useTerminalStore } from '../stores/use-terminal-store';
+import { useTerminalStore, CONNECTION_STATE } from '../stores/use-terminal-store';
 import AnsiText from '../utils/ansi-text';
 import './terminal-panel.css';
 
 export const TERMINAL_MIN_H = 36;
 export const TERMINAL_DEFAULT_H = 220;
-
-// ── Renderizado de líneas ─────────────────────────────────────────────────────
-//
-// El backend usa `exec` (sin shell interactivo) para los comandos, por lo que
-// nunca llegan líneas de prompt del servidor ni ecos de comandos. No hay que
-// detectar ni parsear prompts aquí: cada línea recibida es exactamente el
-// output del proceso remoto.
-//
-// Los tipos posibles son:
-//   · "cmd"   — línea cosmética generada por el frontend (prompt de Windows CMD)
-//   · "out"   — línea de stdout del servidor
-//   · "error" — línea de stderr del servidor
-//   · "blank" — línea vacía
-//   · "idle"  — cursor parpadeante cuando la terminal está en espera
 
 function renderLine(line, i) {
   switch (line.type) {
@@ -71,24 +57,60 @@ function renderLine(line, i) {
   }
 }
 
-// ── Componente ────────────────────────────────────────────────────────────────
-
 export default function TerminalPanel({ isOpen, onToggle, height, onHeightChange }) {
   const lines = useTerminalStore((s) => s.lines);
   const isActive = useTerminalStore((s) => s.isActive);
+  const connectionState = useTerminalStore((s) => s.connectionState);
+  const prompt = useTerminalStore((s) => s.prompt);
+
+  const [inputValue, setInputValue] = useState('');
 
   const panelRef = useRef(null);
   const bodyRef = useRef(null);
+  const inputRef = useRef(null);
   const dragState = useRef({ startY: 0, startH: 0, nextH: 0, rafId: 0 });
 
-  // Auto-scroll al fondo cuando llegan nuevas líneas.
+  const isConnected = connectionState === CONNECTION_STATE.CONNECTED;
+
   useEffect(() => {
     if (bodyRef.current) {
       bodyRef.current.scrollTop = bodyRef.current.scrollHeight;
     }
   }, [lines]);
 
-  // ── Drag para redimensionar ───────────────────────────────────────────────
+  useEffect(() => {
+    if (isConnected && inputRef.current && isOpen) {
+      inputRef.current.focus();
+    }
+  }, [isConnected, isOpen]);
+
+  const handleCommandSubmit = useCallback(async (e) => {
+    e.preventDefault();
+    const command = inputValue.trim();
+    const { addLine } = useTerminalStore.getState();
+
+    addLine({ type: 'cmd', prompt, command, cursor: false });
+
+    if (!command) {
+      addLine({ type: 'blank' });
+    }
+
+    setInputValue('');
+
+    if (command) {
+      addLine({ type: 'error', text: 'Funcionalidad no implementada' });
+    }
+  }, [inputValue, prompt]);
+
+  const handleInputChange = useCallback((e) => {
+    setInputValue(e.target.value);
+  }, []);
+
+  const handleBodyClick = useCallback(() => {
+    if (isConnected && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [isConnected]);
 
   const onMouseDown = useCallback((e) => {
     e.preventDefault();
@@ -120,8 +142,6 @@ export default function TerminalPanel({ isOpen, onToggle, height, onHeightChange
     window.addEventListener('mousemove', onMove);
     window.addEventListener('mouseup', onUp);
   }, [height, onHeightChange]);
-
-  // ── Render ────────────────────────────────────────────────────────────────
 
   return (
     <div
@@ -178,13 +198,31 @@ export default function TerminalPanel({ isOpen, onToggle, height, onHeightChange
       </div>
 
       {isOpen && (
-        <div className="terminal-panel__body" ref={bodyRef}>
+        <div className="terminal-panel__body" ref={bodyRef} onClick={handleBodyClick}>
           {lines.length > 0 ? (
             lines.map(renderLine)
           ) : (
             <p className="terminal-panel__placeholder">
               $&nbsp;<span className="terminal-panel__cursor">▌</span>
             </p>
+          )}
+
+          {isConnected && (
+            <form className="terminal-panel__input-row" onSubmit={handleCommandSubmit}>
+              <span className="terminal-panel__prompt">{prompt}&nbsp;</span>
+              <input
+                ref={inputRef}
+                type="text"
+                className="terminal-panel__input"
+                value={inputValue}
+                onChange={handleInputChange}
+                disabled={!isConnected}
+                spellCheck={false}
+                autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="off"
+              />
+            </form>
           )}
         </div>
       )}

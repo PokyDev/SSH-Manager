@@ -28,8 +28,6 @@ serde_json  = "1"
 
 tokio       = { version = "1.52.3", features = ["full"] }
 
-# russh: SSH2 puro en Rust, sin dependencias C.
-# russh-keys se re-exporta desde russh::keys — no necesita entrada separada.
 russh       = "0.61.0"
 russh-sftp  = "2.2.2"
 

@@ -343,6 +343,19 @@
   transform: scale(0.98);
 }
 
+.ssh-config-card__btn-connect--disconnect {
+  background: transparent;
+  color: var(--color-error-light);
+  border: 1px solid rgba(196, 57, 77, 0.35);
+}
+
+.ssh-config-card__btn-connect--disconnect:hover {
+  background: rgba(196, 57, 77, 0.08);
+  border-color: rgba(196, 57, 77, 0.5);
+  box-shadow: 0 0 0 2px rgba(196, 57, 77, 0.12);
+  filter: none;
+}
+
 .ssh-config-card__btn-test {
   height: 32px;
   display: flex;

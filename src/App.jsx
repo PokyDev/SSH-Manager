@@ -7,7 +7,6 @@ import Titlebar from './layout/titlebar';
 import Landing from './pages/landing';
 import Dashboard from './pages/dashboard';
 import { useNavStore } from './stores/use-nav-store';
-import { useTerminalStore } from './stores/use-terminal-store';
 
 // ── Gestión de tema ───────────────────────────────────────────────────────────
 
@@ -56,15 +55,6 @@ function useTheme() {
 export default function App() {
   const { toggle } = useTheme();
   const { view, phase } = useNavStore();
-  const startListening = useTerminalStore((s) => s.startListening);
-  const stopListening = useTerminalStore((s) => s.stopListening);
-
-  // Suscribirse al evento `terminal:line` una sola vez al montar la app.
-  // stopListening libera el listener en hot-reload de desarrollo.
-  useEffect(() => {
-    startListening();
-    return () => stopListening();
-  }, [startListening, stopListening]);
 
   const transitionClass =
     phase === 'exit'  ? 'view-exit'  :
