@@ -151,7 +151,7 @@ export default function SshConfigCard() {
     } catch (err) {
       const message = err?.message ?? String(err);
       addLine({ type: 'error', text: `Error de conexión: ${message}` });
-      addLine({ type: 'idle', prompt: 'C:\\Users\\Usuario>' });
+      addLine({ type: 'idle', prompt: `${userDir}>` });
       setActive(false);
       setIsConnecting(false);
       return;
@@ -177,7 +177,7 @@ export default function SshConfigCard() {
     addLine({ type: 'out', text: 'logout' });
     addLine({ type: 'blank' });
     addLine({ type: 'out', text: `Connection to ${sshHost} closed.` });
-    addLine({ type: 'idle', prompt: 'C:\\Users\\Usuario>' });
+    addLine({ type: 'idle', prompt: `${userDir}>` });
 
     setActive(false);
     setIsConnecting(false);
