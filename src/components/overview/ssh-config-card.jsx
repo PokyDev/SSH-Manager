@@ -8,7 +8,7 @@ import './ssh-config-card.css';
 
 const DEFAULT_CONNECTION = 'ubuntu@ec2-3-223-213-238.compute-1.amazonaws.com';
 
-// ── Helper: extrae directorio y nombre de archivo de un path Windows ──────────
+const delay = (ms) => new Promise((r) => setTimeout(r, ms));
 
 function splitWindowsPath(fullPath) {
   const lastSep = Math.max(fullPath.lastIndexOf('\\'), fullPath.lastIndexOf('/'));
@@ -19,6 +19,20 @@ function splitWindowsPath(fullPath) {
     dir: fullPath.substring(0, lastSep),
     file: fullPath.substring(lastSep + 1),
   };
+}
+
+function extractSshUser(connStr) {
+  const match = connStr.match(/(\w+)@/);
+  return match ? match[1] : 'user';
+}
+
+function extractSshShortHost(connStr) {
+  const match = connStr.match(/@([\w.-]+)/);
+  if (!match) return 'server';
+  const full = match[1];
+  const ec2Match = full.match(/ec2-([\d-]+)/);
+  if (ec2Match) return `ip-${ec2Match[1]}`;
+  return full.split('.')[0];
 }
 
 // ── Componente ────────────────────────────────────────────────────────────────
@@ -107,32 +121,66 @@ export default function SshConfigCard() {
 
     setIsConnecting(true);
 
-    const { clearTerminal, addLine, setActive, requestOpen } = useTerminalStore.getState();
+    const { clearTerminal, typeCommand, addLine, setActive, requestOpen } = useTerminalStore.getState();
 
-    // Limpiar terminal y expandirla
     clearTerminal();
     requestOpen();
     setActive(true);
 
-    // Líneas cosméticas: simula estar en Windows CMD antes de conectar
     const { dir, file } = splitWindowsPath(pemPath);
     const userDir = dir || 'C:\\Users\\Usuario';
     const pemFile = file || 'key.pem';
+    const sshUser = extractSshUser(connectionString);
+    const fallbackPrompt = `${sshUser}@${extractSshShortHost(connectionString)}:~$`;
+    const sshHost = connectionString.split('@')[1] || 'server';
 
-    addLine({ type: 'cmd', prompt: 'C:\\Users\\Usuario>', command: `cd "${userDir}"` });
-    addLine({ type: 'cmd', prompt: `${userDir}>`, command: `ssh -i "${pemFile}" ${connectionString}` });
+    // ── Navegar al directorio de la clave .pem ────────────────────────────
+    await typeCommand('C:\\Users\\>', `cd "${userDir}"`);
+    await delay(150);
+
+    // ── Ejecutar comando SSH ───────────────────────────────────────────────
+    await typeCommand(`${userDir}>`, `ssh -i "${pemFile}" ${connectionString}`);
     addLine({ type: 'blank' });
+    await delay(200);
 
+    // ── Banner de bienvenida del servidor ──────────────────────────────────
+    let linuxPrompt = fallbackPrompt;
     try {
-      // El backend emite líneas via terminal:line que el store escucha
-      await invoke('ssh_connect', { pemPath, connectionString });
+      const detectedPrompt = await invoke('ssh_connect', { pemPath, connectionString });
+      linuxPrompt = detectedPrompt || fallbackPrompt;
     } catch (err) {
       const message = err?.message ?? String(err);
       addLine({ type: 'error', text: `Error de conexión: ${message}` });
-    } finally {
+      addLine({ type: 'idle', prompt: 'C:\\Users\\Usuario>' });
       setActive(false);
       setIsConnecting(false);
+      return;
     }
+
+    await delay(400);
+
+    // ── Ejecutar ls ───────────────────────────────────────────────────────
+    await typeCommand(linuxPrompt, 'ls');
+    await delay(200);
+    try {
+      await invoke('ssh_exec', { pemPath, connectionString, command: 'ls -C --width=220' });
+    } catch (err) {
+      const message = err?.message ?? String(err);
+      addLine({ type: 'error', text: `Error: ${message}` });
+    }
+
+    await delay(400);
+
+    // ── Cerrar sesión ─────────────────────────────────────────────────────
+    await typeCommand(linuxPrompt, 'exit');
+    await delay(500);
+    addLine({ type: 'out', text: 'logout' });
+    addLine({ type: 'blank' });
+    addLine({ type: 'out', text: `Connection to ${sshHost} closed.` });
+    addLine({ type: 'idle', prompt: 'C:\\Users\\Usuario>' });
+
+    setActive(false);
+    setIsConnecting(false);
   }, [isConnecting, pemPath, connectionString]);
 
   const isTesting = testStatus === TEST_STATUS.TESTING;
